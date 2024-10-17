@@ -98,7 +98,7 @@ This problem uses accelerometer data collected on 250 participants in the NHANES
 
 #### First, import the `nhanes_covar.csv` dataset:
 
-The dataset includes: SEQN, sex, age, BMI and education status of 250 participants. Those are missing demographic data and those are less than 21 years old should be excluded; SEQN, sex and education should not be numeric.
+The dataset includes SEQN, sex, age, BMI and education status data of 250 participants. Those are missing demographic data and those are less than 21 years old should be excluded; SEQN, sex and education should not be numeric.
 
 ```{r clean_covar}
 covar = 
@@ -225,4 +225,97 @@ This graph shows a consistent pattern of daily activity peaks for both men and w
 
 ### Problem 3
 
+#### Import, clean and combine datasets:
+```{r import 4 datasets}
+Jan2020 = 
+  read_csv("C:/Users/22865/OneDrive/Desktop/Data Science 1/HWs/p8105_hw3_yj2802/citibike/Jan 2020 Citi.csv",
+             col_types = cols(duration = "n")) |>
+  janitor::clean_names() |>
+  mutate(year="2020", month = "Jan")
 
+Jan2024 = 
+  read_csv("C:/Users/22865/OneDrive/Desktop/Data Science 1/HWs/p8105_hw3_yj2802/citibike/Jan 2024 Citi.csv",
+             col_types = cols(duration = "n")) |>
+  janitor::clean_names() |>
+  mutate(year="2024", month = "Jan")
+
+July2020 = 
+  read_csv("C:/Users/22865/OneDrive/Desktop/Data Science 1/HWs/p8105_hw3_yj2802/citibike/July 2020 Citi.csv",
+             col_types = cols(duration = "n")) |>
+  janitor::clean_names() |>
+  mutate(year="2020", month = "July")
+
+July2024 = 
+  read_csv("C:/Users/22865/OneDrive/Desktop/Data Science 1/HWs/p8105_hw3_yj2802/citibike/July 2024 Citi.csv",
+             col_types = cols(duration = "n")) |>
+  janitor::clean_names() |>
+  mutate(year="2024", month = "July")
+
+p3_final = bind_rows(Jan2020, Jan2024, July2020, July2024)
+```
+
+The result dataset contains Citi Bike data of 4 months, and has `r ncol(p3_final)` variables and `r nrow(p3_final)` observations. Including virables of `r colnames(p3_final)`
+
+#### Create table 1:
+
+Table 1 shows the total number of rides in each combination of year and month separating casual riders and Citi Bike members:
+
+```{r}
+table1 = p3_final |>
+  group_by(year, month, member_casual) |>
+  summarize(total_rides = n(), .groups = 'drop')
+table1
+```
+
+#### Create table 2:
+
+Table 2 shows the 5 most popular starting stations for July 2024:
+
+```{r}
+table2 = p3_final |>
+  mutate(year = as.character(year), month = as.character(month)) |>
+  filter(year == "2024", month == "July") |>
+  group_by(start_station_name) |>
+  summarize(total_rides = n(), .groups = 'drop') |>
+  arrange(desc(total_rides)) |>
+  head(5)
+table2
+```
+
+#### Create the plot:
+
+The plot shows the effects of day of the week, month, and year on median ride duration:
+
+```{r p3_plot}
+median_duration_data = p3_final |>
+  group_by(year, month, weekdays) |>
+  summarize(median_duration = median(duration, na.rm = TRUE), .groups = 'drop')
+
+ggplot(median_duration_data, aes(x = weekdays, y = median_duration, color = month, group = interaction(month, year))) +
+  geom_line() +
+  facet_wrap(~ year) +  # Panel by year
+  labs(title = "Relationship Between Median Ride Duration and Day of the Week, Month, and Year",
+       x = "Day of the Week", y = "Median Ride Duration (minutes)",
+       color = "Month") +
+  theme_minimal()
+```
+
+#### Create the figure
+
+The p3_figure shows the impact of month, membership status, and bike type on the distribution of ride duration for data in 2024:
+
+```{r}
+data_2024 = p3_final |>
+  filter(year == "2024")
+
+ggplot(data_2024, aes(x = duration, fill = member_casual)) +
+  geom_histogram(binwidth = 5, position = "dodge") +
+  facet_grid(month ~ rideable_type) +
+  labs(title = "Distribution of Ride Duration by Month, Membership Status, and Bike Type (2024)",
+       x = "Ride Duration", 
+       y = "Number of Rides",
+       fill = "Membership Status") +
+  theme_minimal()
+```
+
+The plot shows that most Citi Bike rides in both January and July 2024, regardless of bike type or membership status, have relatively short duration, with the majority of rides lasting under 50 minutes. Additionally, members account for a significantly higher number of rides compared to casual riders.
