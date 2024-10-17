@@ -260,7 +260,7 @@ The result dataset contains Citi Bike data of 4 months, and has `r ncol(p3_final
 
 Table 1 shows the total number of rides in each combination of year and month separating casual riders and Citi Bike members:
 
-```{r}
+```{r table 1}
 table1 = p3_final |>
   group_by(year, month, member_casual) |>
   summarize(total_rides = n(), .groups = 'drop')
@@ -271,7 +271,7 @@ table1
 
 Table 2 shows the 5 most popular starting stations for July 2024:
 
-```{r}
+```{r table 2}
 table2 = p3_final |>
   mutate(year = as.character(year), month = as.character(month)) |>
   filter(year == "2024", month == "July") |>
@@ -304,7 +304,7 @@ ggplot(median_duration_data, aes(x = weekdays, y = median_duration, color = mont
 
 The p3_figure shows the impact of month, membership status, and bike type on the distribution of ride duration for data in 2024:
 
-```{r}
+```{r figure}
 data_2024 = p3_final |>
   filter(year == "2024")
 
